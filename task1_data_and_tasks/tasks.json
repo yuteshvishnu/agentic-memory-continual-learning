@@ -1,1 +1,190 @@
-[]
+[
+  {
+    "id": "T1",
+    "prompt": "Using task1_data_and_tasks/data/mendota.csv, what was the mean water temperature (deg C) at Lake Mendota during July 2026? Reply with one number to 2 decimals.",
+    "files": [
+      "task1_data_and_tasks/data/mendota.csv"
+    ],
+    "answer": 22.04,
+    "tol": 0.05,
+    "wrong_variants": {
+      "kept_flagged": [
+        -112.65,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ]
+    }
+  },
+  {
+    "id": "T2",
+    "prompt": "Using task1_data_and_tasks/data/monona.csv, what was the maximum water temperature (deg C) at Lake Monona on July 4, 2026? Reply with one number to 2 decimals.",
+    "files": [
+      "task1_data_and_tasks/data/monona.csv"
+    ],
+    "answer": 28.0,
+    "tol": 0.05,
+    "wrong_variants": {
+      "calendar_day": [
+        23.64,
+        "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
+      ],
+      "kept_flagged": [
+        31.0,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ]
+    }
+  },
+  {
+    "id": "T3",
+    "prompt": "Using task1_data_and_tasks/data/mendota.csv, how many hourly readings exceeded 25 deg C at Lake Mendota on July 10, 2026? Reply with one integer.",
+    "files": [
+      "task1_data_and_tasks/data/mendota.csv"
+    ],
+    "answer": 1,
+    "tol": 0.05,
+    "wrong_variants": {
+      "calendar_day": [
+        4,
+        "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
+      ],
+      "kept_flagged": [
+        2,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ]
+    }
+  },
+  {
+    "id": "T4",
+    "prompt": "Using task1_data_and_tasks/data/monona.csv, what was the mean dissolved oxygen (mg/L) at Lake Monona on July 15, 2026? Reply with one number to 2 decimals.",
+    "files": [
+      "task1_data_and_tasks/data/monona.csv"
+    ],
+    "answer": 7.32,
+    "tol": 0.05,
+    "wrong_variants": {
+      "calendar_day": [
+        7.62,
+        "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
+      ],
+      "kept_flagged": [
+        -409.58,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ]
+    }
+  },
+  {
+    "id": "T5",
+    "prompt": "Using task1_data_and_tasks/data/wingra.csv, what was the mean water temperature (deg C) at Lake Wingra on July 4, 2026? Reply with one number to 2 decimals.",
+    "files": [
+      "task1_data_and_tasks/data/wingra.csv"
+    ],
+    "answer": 22.46,
+    "tol": 0.05,
+    "wrong_variants": {
+      "shifted_wingra": [
+        21.88,
+        "Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift."
+      ],
+      "kept_flagged": [
+        -395.16,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ]
+    }
+  },
+  {
+    "id": "T6",
+    "prompt": "Using task1_data_and_tasks/data/mendota.csv, what was the maximum wind speed (m/s) at Lake Mendota during July 2026? Reply with one number to 2 decimals.",
+    "files": [
+      "task1_data_and_tasks/data/mendota.csv"
+    ],
+    "answer": 11.0,
+    "tol": 0.05,
+    "wrong_variants": {
+      "row_drop": [
+        9.0,
+        "Quality flags are per sensor; a flag on one reading doesn't invalidate the other readings in that row."
+      ]
+    }
+  },
+  {
+    "id": "T7",
+    "prompt": "Using task1_data_and_tasks/data/mendota.csv and task1_data_and_tasks/data/monona.csv, what was Lake Mendota's mean water temperature (deg C) minus Lake Monona's mean water temperature on July 20, 2026 (Mendota minus Monona)? Reply with one number to 2 decimals.",
+    "files": [
+      "task1_data_and_tasks/data/mendota.csv",
+      "task1_data_and_tasks/data/monona.csv"
+    ],
+    "answer": 0.53,
+    "tol": 0.05,
+    "wrong_variants": {
+      "calendar_day": [
+        -0.45,
+        "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
+      ],
+      "kept_flagged": [
+        -834.59,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ]
+    }
+  },
+  {
+    "id": "T8",
+    "prompt": "Using task1_data_and_tasks/data/wingra.csv and task1_data_and_tasks/data/mendota.csv, what was Lake Wingra's mean water temperature (deg C) minus Lake Mendota's mean water temperature on July 22, 2026 (Wingra minus Mendota)? Reply with one number to 2 decimals.",
+    "files": [
+      "task1_data_and_tasks/data/wingra.csv",
+      "task1_data_and_tasks/data/mendota.csv"
+    ],
+    "answer": 0.15,
+    "tol": 0.05,
+    "wrong_variants": {
+      "shifted_wingra": [
+        -0.41,
+        "Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift."
+      ],
+      "calendar_day": [
+        0.57,
+        "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
+      ],
+      "kept_flagged": [
+        -417.41,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ]
+    }
+  },
+  {
+    "id": "T9",
+    "prompt": "Using task1_data_and_tasks/data/wingra.csv, what was the maximum wind speed (m/s) at Lake Wingra on July 18, 2026? Reply with one number to 2 decimals.",
+    "files": [
+      "task1_data_and_tasks/data/wingra.csv"
+    ],
+    "answer": 10.0,
+    "tol": 0.05,
+    "wrong_variants": {
+      "shifted_wingra": [
+        9.0,
+        "Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift."
+      ],
+      "row_drop": [
+        5.23,
+        "Quality flags are per sensor; a flag on one reading doesn't invalidate the other readings in that row."
+      ]
+    }
+  },
+  {
+    "id": "T10",
+    "prompt": "Using task1_data_and_tasks/data/monona.csv, how many hourly readings had dissolved oxygen below 5 mg/L at Lake Monona on July 25, 2026? Reply with one integer.",
+    "files": [
+      "task1_data_and_tasks/data/monona.csv"
+    ],
+    "answer": 4,
+    "tol": 0.05,
+    "wrong_variants": {
+      "calendar_day": [
+        6,
+        "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
+      ],
+      "kept_flagged": [
+        5,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ]
+    }
+  }
+]
