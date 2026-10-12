@@ -1,0 +1,61 @@
+% Person 1's report section: "Task sequence and what transfers" (~half page).
+% Self-contained fragment; \input this into the main report. Uses only plain
+% tabular so it needs no extra packages.
+
+\section{Task sequence and what transfers}
+
+The agent plays a new research assistant answering numeric questions about hourly
+July~2026 sensor CSVs from three Madison lakes: Mendota and Monona (logger firmware
+v1) and Wingra (firmware v2). It writes Python, gets up to three attempts per task, and
+after a wrong answer a checker (a senior lab member) returns a reviewer message naming
+the broken rule. Four conventions are \emph{never} stated in the prompts and must be
+learned from that feedback:
+\begin{itemize}
+  \item \textbf{C1}: a reading is trustworthy only if its own quality flag is~0; drop
+        estimated, suspect, and offline values (the offline ones are stored as $-9999$).
+  \item \textbf{C2}: for the v1 stations the lab ``day'' runs 08:00--08:00, not
+        midnight--midnight.
+  \item \textbf{E1} (exception to C2): Wingra's v2 logger already records on the standard
+        calendar day, so the 08:00 shift must \emph{not} be applied to it.
+  \item \textbf{E2} (exception to C1): quality flags are per sensor, so a flag on one
+        variable does not invalidate the other readings in the same row.
+\end{itemize}
+
+The ten tasks are ordered to establish the shared rules, then break them, then return to
+and combine them:
+
+\begin{center}
+\begin{tabular}{llll}
+\hline
+\textbf{Task} & \textbf{Question (one number)} & \textbf{Lessons} & \textbf{Role} \\
+\hline
+T1  & Mendota mean water temp, July              & C1          & Introduce C1 \\
+T2  & Monona max water temp, Jul 4               & C1, C2      & Introduce C2 \\
+T3  & Mendota hours $>25^\circ$C, Jul 10         & C1, C2      & Reinforce \\
+T4  & Monona mean dissolved O$_2$, Jul 15        & C1, C2      & Reinforce \\
+T5  & Wingra mean water temp, Jul 4             & C1, E1      & Exception \\
+T6  & Mendota max wind speed, July               & C1, E2      & Exception \\
+T7  & Mendota $-$ Monona daily mean temp, Jul 20 & C1, C2      & Return \\
+T8  & Wingra $-$ Mendota daily mean temp, Jul 22 & C2, E1      & Combine \\
+T9  & Wingra max wind speed, Jul 18             & E1, E2      & Combine exceptions \\
+T10 & Monona hours with O$_2 < 5$ mg/L, Jul 25   & C1, C2      & Return \\
+\hline
+\end{tabular}
+\end{center}
+
+\paragraph{Success criteria.} Every task has a single ground-truth number. A numeric
+answer counts as correct within a tolerance of $\pm0.05$; the two counting tasks (T3,
+T10) must match exactly. We log success on the \emph{first} attempt and the final
+success within three attempts; first-attempt success is the primary signal of whether a
+condition has ``learned'' the rule. Each planted single-rule mistake is constructed to
+differ from the correct answer by more than $0.1$ (verified by \texttt{sanity\_check.py}),
+so the checker can always tell a conceptual error from rounding.
+
+\paragraph{What transfers.} The reusable knowledge is the four conventions, and crucially
+their \emph{scope}. C1 and C2 recur across most tasks, so a memory that records them
+should turn T2--T4, T7, and T10 into first-attempt successes. The exceptions test whether
+the scope travels with the rule: a memory that stores ``shift the day to 08:00'' or ``drop
+flagged rows'' without the qualifier ``v1 only'' / ``per sensor'' will \emph{over-apply}
+the lesson and fail T5 (Wingra), T6 and T9 (per-sensor wind), and T8 (which needs the v1
+rule and the Wingra exception in the same task). This is the mechanism behind our
+hypothesis that memory can hurt as well as help.
