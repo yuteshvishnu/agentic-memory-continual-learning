@@ -25,7 +25,7 @@ The agent learns these only from checker feedback, then must remember them.
 
 | Task folder | Person | Responsibility |
 |---|---|---|
-| `task1_data_and_tasks/` | Person 1 (`<name>`) | Station CSVs (with `*_qc` columns) and the 10 tasks with answers |
+| `task1_data_and_tasks/` | Person 1 (Akshat) | Station CSVs (with `*_qc` columns) and the 10 tasks with answers |
 | `task2_checker_and_report/` | Person 2 (`<name>`) | Answer checker with reviewer feedback, hypotheses, report and submission |
 | `task3_agent_and_runner/` | Person 3 (`<name>`) | Agent loop, experiment runner, cost logging, results plot |
 | `task4_episodic_memory/` | Person 4 (`<name>`) | No-memory baseline and episodic memory |
