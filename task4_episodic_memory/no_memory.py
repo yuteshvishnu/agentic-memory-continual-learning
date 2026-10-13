@@ -16,7 +16,6 @@ class NoMemory(Memory):
 
     def update(self, task: dict, trace: dict, success: bool) -> None:
         """No-op; baseline retains no state across tasks."""
-        pass
 
     def snapshot(self) -> str:
         """Returns empty string indicating no memory state."""

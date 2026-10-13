@@ -1,7 +1,6 @@
 """Unit tests for Task 4: NoMemory baseline and EpisodicMemory."""
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -11,8 +10,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from shared.interfaces import Memory
-from task4_episodic_memory.no_memory import NoMemory
 from task4_episodic_memory.episodic import EpisodicMemory, _extract_date_keywords
+from task4_episodic_memory.no_memory import NoMemory
 
 
 def test_no_memory_interface():
