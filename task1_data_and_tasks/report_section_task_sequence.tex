@@ -47,9 +47,12 @@ T10 & Monona hours with O$_2 < 5$ mg/L, Jul 25   & C1, C2      & Return \\
 answer counts as correct within a tolerance of $\pm0.05$; the two counting tasks (T3,
 T10) must match exactly. We log success on the \emph{first} attempt and the final
 success within three attempts; first-attempt success is the primary signal of whether a
-condition has ``learned'' the rule. Each planted single-rule mistake is constructed to
-differ from the correct answer by more than $0.1$ (verified by \texttt{sanity\_check.py}),
-so the checker can always tell a conceptual error from rounding.
+condition has ``learned'' the rule. Each planted mistake is constructed to differ from
+the correct answer by more than $0.1$ (verified by \texttt{sanity\_check.py}), so the
+checker can always tell a conceptual error from rounding. For the multi-rule tasks we
+also plant the \emph{compound} mistake (both rules broken at once), which is exactly
+where a no-memory agent lands on its first attempt; without it the checker would return a
+hint-less message and understate the no-memory baseline.
 
 \paragraph{What transfers.} The reusable knowledge is the four conventions, and crucially
 their \emph{scope}. C1 and C2 recur across most tasks, so a memory that records them
