@@ -236,6 +236,68 @@ def test_retrieved_but_not_applied_for_a_known_exception_ignored_again(memory):
     assert "T9" in memory.rules["C2"]["retrieved_but_not_applied"]["task_ids"]
 
 
+def test_first_try_success_is_labeled_as_weak_evidence_not_confirmed(memory):
+    learn_c1_c2(memory)
+    memory.update(TASKS["T7"], make_trace("T7", []), True)   # first-try success
+    actions = [e["action"] for e in memory.rules["C1"]["evidence"]] + \
+              [e["action"] for e in memory.rules["C2"]["evidence"]]
+    assert "retrieved, solved first try" in actions
+    assert "confirmed" not in actions   # old, overclaiming label must be gone entirely
+
+
+def test_repeated_failure_adds_no_parent_evidence_only_rbna(memory):
+    # T1 learns C1. T4 later fails on the SAME C1 violation before correcting --
+    # that must not read as a second "confirming" scope-evidence entry for C1.
+    memory.update(TASKS["T1"], make_trace("T1", [feedback_for("T1", "kept_flagged")]), True)
+    n_evidence_before = len(memory.rules["C1"]["evidence"])
+    memory.update(TASKS["T4"], make_trace("T4", [feedback_for("T4", "kept_flagged")]), True)
+    assert len(memory.rules["C1"]["evidence"]) == n_evidence_before   # unchanged
+    assert all(e["task_id"] != "T4" for e in memory.rules["C1"]["evidence"])
+    assert memory.rules["C1"]["retrieved_but_not_applied"]["count"] == 1   # the honest signal instead
+    assert "T4" in memory.rules["C1"]["retrieved_but_not_applied"]["task_ids"]
+
+
+def test_first_try_success_skips_parent_evidence_for_excepted_station(memory):
+    learn_everything(memory)   # C2 now has a station=wingra exception, learned at T5
+    # T8 is a Wingra+Mendota diff task -- the general C2 rule doesn't cover Wingra,
+    # its exception does, so T8 must not read as confirming the parent rule.
+    memory.update(TASKS["T8"], make_trace("T8", []), True)
+    assert all(e["task_id"] != "T8" for e in memory.rules["C2"]["evidence"])
+    # T10 (Monona, no Wingra involved) should confirm normally.
+    memory.update(TASKS["T10"], make_trace("T10", []), True)
+    assert any(e["task_id"] == "T10" for e in memory.rules["C2"]["evidence"])
+
+
+def test_exception_teaching_task_is_not_evidence_for_the_parent_rule(memory):
+    learn_c1_c2(memory)
+    memory.update(TASKS["T5"], make_trace("T5", [feedback_for("T5", "shifted_wingra")]), True)
+    memory.update(TASKS["T6"], make_trace("T6", [feedback_for("T6", "row_drop")]), True)
+
+    # T5 taught the Wingra exception -- it belongs only to the exception's own evidence.
+    assert all(e["task_id"] != "T5" for e in memory.rules["C2"]["evidence"])
+    assert memory.rules["C2"]["exceptions"][0]["evidence"] == ["T5"]
+
+    # T6 taught the per-variable exception -- same rule, applied to C1.
+    assert all(e["task_id"] != "T6" for e in memory.rules["C1"]["evidence"])
+    assert memory.rules["C1"]["exceptions"][0]["evidence"] == ["T6"]
+
+
+def test_variable_detection_has_no_unknown_for_any_real_task(memory):
+    for task in TASKS.values():
+        ctx = memory._task_context(task)
+        assert ctx["variable_str"] != "unknown", task["id"]
+        assert ctx["variables"], task["id"]
+
+
+def test_variable_keyword_mapping():
+    memory = StructuredMemory()
+    # T3's real prompt relies on "deg C" alone (no "water temperature" phrase).
+    assert memory._task_context(TASKS["T3"])["variables"] == ["water_temp"]
+    assert memory._task_context({"files": [], "prompt": "logged 18°C at dawn"})["variables"] == ["water_temp"]
+    assert memory._task_context({"files": [], "prompt": "dissolved oxygen crashed"})["variables"] == ["dissolved_oxygen"]
+    assert memory._task_context({"files": [], "prompt": "wind gusts were high"})["variables"] == ["wind_speed"]
+
+
 def test_full_sequence_t1_through_t10_and_print_final_snapshot(memory):
     learn_everything(memory)
     memory.update(TASKS["T3"], make_trace("T3", [feedback_for("T3", "calendar_day"),

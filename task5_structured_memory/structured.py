@@ -11,8 +11,15 @@ conventions):
     E2  per-variable exception to C1  ("per sensor" / "other readings in that row")
 
 A rule's scope is not written by us either -- it is assembled from evidence:
-the station(s)/variable(s)/day-scope of every task where it was learned or
-confirmed. An exception stores the verbatim exception message plus the
+the station(s)/variable(s)/day-scope of the task that first taught it, plus
+any later task where it was active and the agent solved the task on the first
+try (labeled "retrieved, solved first try" -- weak evidence, since a first-try
+success doesn't prove the agent actually used the memory). A task that only
+re-triggers a known exception, or re-violates an already-learned rule, adds
+no scope evidence to the parent rule at all -- the former is recorded only
+under that exception's own evidence, and the latter is already captured by
+retrieved_but_not_applied below. An exception stores the verbatim exception
+message plus the
 concrete station/variable situation that produced it (derived from the task,
 never hardcoded), and retrieve() marks whether that situation matches the
 current task.
@@ -36,9 +43,9 @@ from shared.interfaces import Memory
 STATIONS = ("mendota", "monona", "wingra")
 
 VARIABLE_KEYWORDS = {
-    "water temperature": "water_temp",
-    "dissolved oxygen": "dissolved_oxygen",
-    "wind speed": "wind_speed",
+    "water_temp": ("temperature", "°c", "deg c"),
+    "dissolved_oxygen": ("oxygen",),
+    "wind_speed": ("wind",),
 }
 
 EXCEPTION_PARENT = {"E1": "C2", "E2": "C1"}
@@ -51,7 +58,7 @@ def _stations_from_files(files: list[str]) -> list[str]:
 
 def _variables_from_prompt(prompt: str) -> list[str]:
     lower = prompt.lower()
-    return [v for kw, v in VARIABLE_KEYWORDS.items() if kw in lower]
+    return [var for var, keywords in VARIABLE_KEYWORDS.items() if any(kw in lower for kw in keywords)]
 
 
 def _scope_from_prompt(prompt: str) -> str:
@@ -216,12 +223,13 @@ class StructuredMemory(Memory):
         kind = "flag_trust" if rule_id == "C1" else "observation_day"
         rule = self.rules.get(rule_id)
         if rule is None:
+            # Only the task that FIRST creates the rule gets a scope-evidence entry here.
+            # A later task that violates the same rule again isn't positive scope evidence
+            # (it didn't confirm anything) -- that failure is already captured honestly by
+            # retrieved_but_not_applied, in update().
             rule = self._new_rule(rule_id, kind)
             rule["text"] = feedback
-        if any(e["task_id"] == task_id for e in rule["evidence"]):
-            return
-        action = "learned" if not rule["evidence"] else "confirmed"
-        rule["evidence"].append(self._evidence_entry(task_id, action, ctx))
+            rule["evidence"].append(self._evidence_entry(task_id, "learned", ctx))
 
     def _situation_for(self, exc_kind: str, ctx: dict, feedback: str = "") -> str:
         # A diff-task (e.g. "Wingra minus Mendota") can reference two stations, but the
@@ -254,10 +262,10 @@ class StructuredMemory(Memory):
             rule["exceptions"].append({"situation": situation, "text": feedback, "evidence": [task_id]})
         elif task_id not in existing["evidence"]:
             existing["evidence"].append(task_id)
-
-        if not any(e["task_id"] == task_id for e in rule["evidence"]):
-            action = "learned" if not rule["evidence"] else "confirmed"
-            rule["evidence"].append(self._evidence_entry(task_id, action, ctx))
+        # A task that teaches or re-triggers an exception is evidence about the EXCEPTION,
+        # not the general rule -- it belongs only in rule["exceptions"][...]["evidence"]
+        # above, never in the parent rule's own evidence/scope list (even when this task
+        # happened to be the one that created the parent rule).
 
     def _retire_copy(self, rule: dict, task_id: str, reason: str) -> None:
         retired_id = f"{rule['id']}@{task_id}"
@@ -282,12 +290,23 @@ class StructuredMemory(Memory):
             rbna["task_ids"].append(task_id)
 
     def _confirm(self, rule_id: str, task_id: str, ctx: dict) -> None:
+        # A first-try success is weak evidence at best -- we can't tell whether the agent
+        # actually used the rule or would have gotten it right anyway, so this is labeled
+        # accordingly rather than as a firm "confirmed".
         rule = self.rules.get(rule_id)
         if rule is None or rule["status"] != "active":
             return
+        if self._has_matching_station_exception(rule, ctx):
+            # The rule's general form doesn't cover this station -- its exception does.
+            # Crediting the parent rule here would claim scope it doesn't have.
+            return
         if any(e["task_id"] == task_id for e in rule["evidence"]):
             return
-        rule["evidence"].append(self._evidence_entry(task_id, "confirmed", ctx))
+        rule["evidence"].append(self._evidence_entry(task_id, "retrieved, solved first try", ctx))
+
+    def _has_matching_station_exception(self, rule: dict, ctx: dict) -> bool:
+        return any(exc["situation"].startswith("station=") and self._situation_matches(exc["situation"], ctx)
+                   for exc in rule["exceptions"])
 
     # ---------- snapshot ----------
 
