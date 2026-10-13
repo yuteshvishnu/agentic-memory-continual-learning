@@ -63,7 +63,7 @@ def _tokenize(text: str) -> list[str]:
 
 def _extract_date_keywords(text: str) -> set[str]:
     """Extract specific day patterns like 'july 4', 'july 10', etc."""
-    matches = re.findall(r"july\s+\d{1,2}", text.lower())
+    matches = re.findall(r"july\s+\d{1,2}(?!\d)", text.lower())
     return set(matches)
 
 

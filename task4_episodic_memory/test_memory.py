@@ -1,9 +1,18 @@
 """Unit tests for Task 4: NoMemory baseline and EpisodicMemory."""
 
 import json
+import os
+import sys
+from pathlib import Path
+
+# Ensure repo root is on sys.path whether executed directly or via python -m
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from shared.interfaces import Memory
 from task4_episodic_memory.no_memory import NoMemory
-from task4_episodic_memory.episodic import EpisodicMemory
+from task4_episodic_memory.episodic import EpisodicMemory, _extract_date_keywords
 
 
 def test_no_memory_interface():
@@ -180,10 +189,40 @@ def test_episodic_robust_trace_handling():
     assert len(mem) == 3
 
 
+def test_date_extraction_year_vs_day():
+    """Verify 'July 2026' is not parsed as 'July 20', avoiding false date matches for T7."""
+    assert _extract_date_keywords("mean water temperature during July 2026") == set()
+    assert _extract_date_keywords("maximum water temperature on July 20, 2026") == {"july 20"}
+    assert _extract_date_keywords("maximum water temperature on July 4, 2026") == {"july 4"}
+    assert _extract_date_keywords("hours above 25 deg C on July 10, 2026") == {"july 10"}
+
+    # Verify T7 does not get a false date overlap score with T1
+    mem = EpisodicMemory()
+    task1 = {
+        "id": "T1",
+        "prompt": "Using task1_data_and_tasks/data/mendota.csv, what was the mean water temperature (deg C) at Lake Mendota during July 2026?",
+        "files": ["task1_data_and_tasks/data/mendota.csv"],
+    }
+    mem.update(task1, {"answer": 22.04}, success=True)
+
+    task7 = {
+        "id": "T7",
+        "prompt": "Using task1_data_and_tasks/data/mendota.csv and task1_data_and_tasks/data/monona.csv, what was Lake Mendota's mean water temperature (deg C) minus Lake Monona's mean water temperature on July 20, 2026?",
+        "files": ["task1_data_and_tasks/data/mendota.csv", "task1_data_and_tasks/data/monona.csv"],
+    }
+    # Date overlap between T7 and T1 should be empty
+    t7_dates = _extract_date_keywords(task7["prompt"])
+    t1_dates = _extract_date_keywords(task1["prompt"])
+    assert t7_dates == {"july 20"}
+    assert t1_dates == set()
+    assert len(t7_dates.intersection(t1_dates)) == 0
+
+
 if __name__ == "__main__":
     test_no_memory_interface()
     test_episodic_memory_cold_start()
     test_episodic_memory_update_and_snapshot()
     test_episodic_retrieval_relevance_and_misleading()
     test_episodic_robust_trace_handling()
+    test_date_extraction_year_vs_day()
     print("All Task 4 tests passed successfully!")
