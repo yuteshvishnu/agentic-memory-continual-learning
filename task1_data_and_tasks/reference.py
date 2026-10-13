@@ -30,6 +30,10 @@ C1_MSG = "Readings aren't trustworthy unless their own quality flag is 0; drop e
 C2_MSG = "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
 E1_MSG = "Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift."
 E2_MSG = "Quality flags are per sensor; a flag on one reading doesn't invalidate the other readings in that row."
+# Compound mistake (more than one rule broken at once). Names the quality-flag rule
+# first; once the agent fixes it the answer lands on the calendar_day corner, whose
+# message then names the day rule -- so the two hints arrive one per attempt.
+BOTH_MSG = "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
 
 
 def load_station(name: str) -> tuple[pd.DataFrame, str]:
@@ -67,6 +71,39 @@ def lab_day(df: pd.DataFrame, firmware: str, date: str) -> pd.DataFrame:
 def all_clean(df: pd.DataFrame) -> pd.DataFrame:
     """The E2 mistake: drop a whole row if ANY variable is flagged."""
     return df[(df["water_temp_qc"] == 0) & (df["do_qc"] == 0) & (df["wind_qc"] == 0)]
+
+
+def cold_compounds() -> dict[str, tuple[float, bool]]:
+    """Cold-agent compound mistake per multi-rule task: calendar/midnight day AND no
+    flag filtering (C1 and C2 broken together). Returns {task_id: (value, is_count)}.
+
+    A no-memory agent on its first attempt knows neither rule, so it lands exactly here
+    -- the corner the single-rule wrong_variants don't cover. `_tasks` plants a
+    `both_rules` variant for each of these whose value is distinct from the answer and
+    the other variants, so the checker can still name a rule instead of going generic.
+    """
+    mendota, _ = load_station("mendota")
+    monona, _ = load_station("monona")
+    wingra, _ = load_station("wingra")
+    r2 = lambda x: round(float(x), 2)  # noqa: E731
+    return {
+        "T2": (r2(cal_day(monona, "2026-07-04")["water_temp_C"].max()), False),
+        "T3": (int((cal_day(mendota, "2026-07-10")["water_temp_C"] > 25).sum()), True),
+        "T4": (r2(cal_day(monona, "2026-07-15")["dissolved_oxygen"].mean()), False),
+        "T7": (r2(cal_day(mendota, "2026-07-20")["water_temp_C"].mean()
+                  - cal_day(monona, "2026-07-20")["water_temp_C"].mean()), False),
+        "T8": (r2(cal_day(wingra, "2026-07-22")["water_temp_C"].mean()
+                  - cal_day(mendota, "2026-07-22")["water_temp_C"].mean()), False),
+        "T10": (int((cal_day(monona, "2026-07-25")["dissolved_oxygen"] < 5).sum()), True),
+    }
+
+
+def _distinct(value, answer, existing: list, is_count: bool) -> bool:
+    """A new variant value is worth planting only if it's cleanly separated from the
+    answer (> 0.1 / >= 1) and from every existing variant (> tol / >= 1)."""
+    if is_count:
+        return abs(value - answer) >= 1 and all(abs(value - v) >= 1 for v in existing)
+    return abs(value - answer) > 0.1 and all(abs(value - v) > TOL for v in existing)
 
 
 # --- per-task computation: returns (answer, {variant_name: [value, message]}) ---
@@ -231,6 +268,17 @@ def _tasks():
             "kept_flagged": [int((obs["dissolved_oxygen"] < 5).sum()), C1_MSG],
         },
     ))
+
+    # Plant the compound ("both rules broken") variant for each multi-rule task, but
+    # only where it's distinct from the answer and the single-rule variants (e.g. T2's
+    # compound coincides with kept_flagged, so it's already covered and skipped).
+    compounds = cold_compounds()
+    for _id, _prompt, _files, answer, variants in specs:
+        if _id in compounds:
+            value, is_count = compounds[_id]
+            existing = [v[0] for v in variants.values()]
+            if _distinct(value, answer, existing, is_count):
+                variants["both_rules"] = [value, BOTH_MSG]
 
     return specs
 

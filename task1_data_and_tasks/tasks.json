@@ -49,6 +49,10 @@
       "kept_flagged": [
         2,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "both_rules": [
+        5,
+        "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
       ]
     }
   },
@@ -68,6 +72,10 @@
       "kept_flagged": [
         -409.58,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "both_rules": [
+        -409.31,
+        "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
       ]
     }
   },
@@ -122,6 +130,10 @@
       "kept_flagged": [
         -834.59,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "both_rules": [
+        -835.52,
+        "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
       ]
     }
   },
@@ -146,6 +158,10 @@
       "kept_flagged": [
         -417.41,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "both_rules": [
+        -417.0,
+        "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
       ]
     }
   },
@@ -184,6 +200,10 @@
       "kept_flagged": [
         5,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "both_rules": [
+        8,
+        "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
       ]
     }
   }
