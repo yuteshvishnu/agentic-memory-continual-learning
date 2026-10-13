@@ -1,0 +1,26 @@
+% Person 4's (Shubhangi) report section: "Episodic memory design and trajectory where memory misled" (~half page).
+% Self-contained fragment; \input this into the main report.
+
+\section{Episodic Memory Design and Failure Modes}
+
+\paragraph{Architecture and Retrieval Mechanism.}
+Our episodic memory system maintains an unstructured episodic store of completed task interactions, implementing the shared \texttt{Memory} contract (\texttt{retrieve}, \texttt{update}, \texttt{snapshot}). Upon completion of each task $T_i$, the agent's full execution episode is logged via \texttt{update}. Each stored episode encapsulates the original user prompt, referenced station CSV files, outcome status, reviewer feedback messages received from incorrect attempts, and the final executed Python code snippet.
+
+During retrieval for a new task $T_k$, \texttt{EpisodicMemory.retrieve} computes a domain-aware relevance score against all prior episodes $E \in \mathcal{M}$:
+\begin{equation}
+\text{Score}(T_k, E) = w_{\text{date}} \cdot \mathbf{1}_{\text{date\_match}} + w_{\text{file}} \cdot \mathbf{1}_{\text{file\_overlap}} + \sum_{t \in \mathcal{V}_k \cap \mathcal{V}_E} w(t) + \epsilon \cdot \text{recency}
+\end{equation}
+where domain-specific terms (station identifiers such as \textit{Mendota}, \textit{Monona}, \textit{Wingra}; sensor variables such as \textit{temperature}, \textit{oxygen}, \textit{wind}; and temporal markers such as \textit{July 4}) receive calibrated weights. The top-$k$ ranked episodes ($k=2$) are formatted with their respective reviewer corrections and code blocks, and injected directly into the LLM system prompt. A compact line budget preserves the team's \$5 API constraint.
+
+\paragraph{When Memory Misleads: Negative Transfer on Exceptions.}
+While episodic memory enables rapid positive transfer on repetitive tasks (e.g., reinforcing the quality flag convention C1 across T2--T4), its lack of explicit abstraction causes systematic vulnerability to \emph{negative transfer} when encountering scoped exceptions:
+
+\begin{enumerate}
+    \item \textbf{Over-generalization on Temporal Exceptions (T5):}
+    In task T2, the agent incurred reviewer correction regarding the 08:00--08:00 observation day (C2) at Lake Monona on July~4. When presented with task T5 (mean temperature at Lake Wingra on July~4), episodic retrieval identified T2 as the highest-scoring precedent due to the shared \textit{July 4} and \textit{temperature} markers. Because episodic recall provides raw precedent rather than scoped rules, the prompt displayed the 08:00 day shift. The agent enthusiastically reapplied the 08:00 observation window to Wingra, yielding the planted trap value of $21.88^\circ\text{C}$ instead of the true calendar-day ground truth ($22.46^\circ\text{C}$). Cold baseline agents (No-Memory) frequently answered T5 correctly on attempt~1 because calendar-day slicing is the default prior for unconditioned models.
+
+    \item \textbf{Verbatim Code Artifact Transfer (T6):}
+    On task T6 (maximum wind speed at Lake Mendota), episodic retrieval surfaced task T1 (Mendota July mean temperature). In T1, the working script dropped rows with any non-zero quality flags. On T6, copying this whole-row dropping pattern discarded the row containing the true peak wind speed ($11.0\,\text{m/s}$) because its temperature flag was non-zero. The agent thus failed exception E2 by importing procedural code verbatim rather than understanding per-variable scoping.
+\end{enumerate}
+
+These empirical trajectories validate hypothesis \textbf{H2}: unstructured episodic recall clutters prompt context and induces negative transfer whenever domain rules carry unstated conditional scopes.

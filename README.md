@@ -28,7 +28,7 @@ The agent learns these only from checker feedback, then must remember them.
 | `task1_data_and_tasks/` | Person 1 (Akshat) | Station CSVs (with `*_qc` columns) and the 10 tasks with answers |
 | `task2_checker_and_report/` | Person 2 (`<name>`) | Answer checker with reviewer feedback, hypotheses, report and submission |
 | `task3_agent_and_runner/` | Person 3 (`<name>`) | Agent loop, experiment runner, cost logging, results plot |
-| `task4_episodic_memory/` | Person 4 (`<name>`) | No-memory baseline and episodic memory |
+| `task4_episodic_memory/` | Person 4 (Shubhangi) | No-memory baseline and episodic memory |
 | `task5_structured_memory/` | Person 5 (`<name>`) | Structured memory with rules, exceptions and forgetting |
 
 `shared/` holds the common interface. `outputs/` holds results, traces and memory snapshots.
