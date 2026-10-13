@@ -1,6 +1,6 @@
 # Task 2: Checker and Report
 
-- **Owner:** Person 2 (`<name>`)
+- **Owner:** Person 2 (`Sreemae`)
 - **Delivers:** `checker.py` (grades answers with reviewer feedback), committed hypotheses, the
   report in `report/`; leads submission.
 - **Deadline:** checker by Sun 11pm; hypotheses committed by Sun 6pm (before any runs).
