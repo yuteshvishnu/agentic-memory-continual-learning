@@ -1,6 +1,6 @@
 # Task 3: Agent and Runner
 
-- **Owner:** Person 3 (`<name>`)
+- **Owner:** Person 3 (Yutesh)
 - **Delivers:** the agent loop (`agent.py`), the experiment runner with cost logging
   (`run_experiment.py`), and the results plot.
 - **Deadline:** integration Mon 10am (one full no-memory run end to end), all 90 runs by Mon 3pm.
