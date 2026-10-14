@@ -5,11 +5,15 @@
     "files": [
       "task1_data_and_tasks/data/mendota.csv"
     ],
-    "answer": 22.04,
+    "answer": 22.06,
     "tol": 0.05,
     "wrong_variants": {
       "kept_flagged": [
-        -112.65,
+        -99.0,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "kept_suspect": [
+        22.23,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
       ]
     }
@@ -66,16 +70,20 @@
     "tol": 0.05,
     "wrong_variants": {
       "calendar_day": [
-        7.62,
+        7.64,
         "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
       ],
       "kept_flagged": [
-        -409.58,
+        -410.03,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
       ],
       "both_rules": [
-        -409.31,
+        -409.76,
         "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
+      ],
+      "kept_suspect": [
+        6.88,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
       ]
     }
   },
@@ -120,20 +128,24 @@
       "task1_data_and_tasks/data/mendota.csv",
       "task1_data_and_tasks/data/monona.csv"
     ],
-    "answer": 0.53,
+    "answer": 0.57,
     "tol": 0.05,
     "wrong_variants": {
       "calendar_day": [
-        -0.45,
+        -0.43,
         "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
       ],
       "kept_flagged": [
-        -834.59,
+        -416.52,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
       ],
       "both_rules": [
-        -835.52,
+        -417.45,
         "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
+      ],
+      "kept_suspect": [
+        1.06,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
       ]
     }
   },
@@ -144,24 +156,28 @@
       "task1_data_and_tasks/data/wingra.csv",
       "task1_data_and_tasks/data/mendota.csv"
     ],
-    "answer": 0.15,
+    "answer": 0.08,
     "tol": 0.05,
     "wrong_variants": {
       "shifted_wingra": [
-        -0.41,
+        -0.48,
         "Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift."
       ],
       "calendar_day": [
-        0.57,
+        0.54,
         "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
       ],
       "kept_flagged": [
-        -417.41,
+        -417.96,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
       ],
       "both_rules": [
-        -417.0,
+        -417.55,
         "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
+      ],
+      "kept_suspect": [
+        -0.42,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
       ]
     }
   },
@@ -194,16 +210,20 @@
     "tol": 0.05,
     "wrong_variants": {
       "calendar_day": [
-        6,
+        7,
         "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
       ],
       "kept_flagged": [
-        5,
+        6,
         "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
       ],
       "both_rules": [
-        8,
+        10,
         "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
+      ],
+      "kept_suspect": [
+        5,
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
       ]
     }
   }

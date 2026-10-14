@@ -9,6 +9,9 @@ Three gates, for every task:
   3. Compound coverage -- for every multi-rule task, the cold-agent compound mistake
                          (both rules broken) matches the answer or some variant, so the
                          checker never has to fall back to a hint-less generic message.
+  4. Flag rule tested -- on the mean/count tasks, "drop only -9999 but keep the suspect
+                         flag-1/2 readings" is outside tolerance (> 0.1 / >= 1), so an
+                         agent can't pass without learning the full quality-flag rule.
 
 Run from the repo root:
     python -m task1_data_and_tasks.generate_data
@@ -16,7 +19,7 @@ Run from the repo root:
     python -m task1_data_and_tasks.sanity_check
 """
 
-from task1_data_and_tasks.reference import TOL, build_tasks, cold_compounds
+from task1_data_and_tasks.reference import TOL, build_tasks, cold_compounds, suspect_values
 
 MIN_NUMERIC_GAP = 0.1
 
@@ -24,6 +27,7 @@ MIN_NUMERIC_GAP = 0.1
 def main() -> None:
     tasks = build_tasks()
     compounds = cold_compounds()
+    suspects = suspect_values()
     failures = []
 
     for task in tasks:
@@ -58,6 +62,17 @@ def main() -> None:
             print(f"    compound (both)  = {str(cval):<10} {'(covered)' if covered else '(NOT COVERED)'} [{tag}]")
             if not covered:
                 failures.append(f"{task['id']}: compound mistake {cval} matches no variant/answer")
+
+        # 4. flag rule actually tested on mean/count tasks
+        if task["id"] in suspects:
+            sval, sint = suspects[task["id"]]
+            gap = abs(sval - ans)
+            tested = (gap >= 1) if sint else (gap > MIN_NUMERIC_GAP)
+            tag = "ok" if tested else "UNTESTED"
+            print(f"    drop-9999-only   = {str(sval):<10} gap={gap:<10.3f} "
+                  f"{'(flag rule tested)' if tested else '(WITHIN TOL - graded correct!)'} [{tag}]")
+            if not tested:
+                failures.append(f"{task['id']}: 'drop only -9999' ({sval}) is within tolerance -> C1 untested")
 
     print("\n" + "=" * 56)
     if failures:
