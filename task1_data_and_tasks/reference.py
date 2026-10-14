@@ -98,6 +98,36 @@ def cold_compounds() -> dict[str, tuple[float, bool]]:
     }
 
 
+def suspect_values() -> dict[str, tuple[float, bool]]:
+    """Half-learned-C1 mistake per mean/count task: drop the -9999 offline readings
+    (flag 3) but KEEP the suspect/estimated ones (flags 1 and 2). Returns
+    {task_id: (value, is_count)}.
+
+    This is the mistake an agent makes once it has figured out "-9999 is junk" but not
+    the full rule "trust only flag 0". The data is planted so this value is outside
+    tolerance (otherwise it would be graded correct, and C1 would go untested here);
+    `_tasks` plants a `kept_suspect` variant carrying the flag-rule message.
+    """
+    mendota, _ = load_station("mendota")
+    monona, _ = load_station("monona")
+    wingra, _ = load_station("wingra")
+    r2 = lambda x: round(float(x), 2)  # noqa: E731
+
+    def keep12(df: pd.DataFrame, var: str) -> pd.Series:
+        qc = {"water_temp_C": "water_temp_qc", "dissolved_oxygen": "do_qc"}[var]
+        return df[df[qc] != 3][var]  # drop offline (flag 3) only; keep flags 1 and 2
+
+    return {
+        "T1": (r2(keep12(mendota, "water_temp_C").mean()), False),
+        "T4": (r2(keep12(obs_day(monona, "2026-07-15"), "dissolved_oxygen").mean()), False),
+        "T7": (r2(keep12(obs_day(mendota, "2026-07-20"), "water_temp_C").mean()
+                  - keep12(obs_day(monona, "2026-07-20"), "water_temp_C").mean()), False),
+        "T8": (r2(keep12(cal_day(wingra, "2026-07-22"), "water_temp_C").mean()
+                  - keep12(obs_day(mendota, "2026-07-22"), "water_temp_C").mean()), False),
+        "T10": (int((keep12(obs_day(monona, "2026-07-25"), "dissolved_oxygen") < 5).sum()), True),
+    }
+
+
 def _distinct(value, answer, existing: list, is_count: bool) -> bool:
     """A new variant value is worth planting only if it's cleanly separated from the
     answer (> 0.1 / >= 1) and from every existing variant (> tol / >= 1)."""
@@ -279,6 +309,16 @@ def _tasks():
             existing = [v[0] for v in variants.values()]
             if _distinct(value, answer, existing, is_count):
                 variants["both_rules"] = [value, BOTH_MSG]
+
+    # Plant the "dropped only -9999, kept the suspect readings" mistake where it's
+    # distinct, so the checker can name the flag rule instead of grading it correct.
+    suspects = suspect_values()
+    for _id, _prompt, _files, answer, variants in specs:
+        if _id in suspects:
+            value, is_count = suspects[_id]
+            existing = [v[0] for v in variants.values()]
+            if _distinct(value, answer, existing, is_count):
+                variants["kept_suspect"] = [value, C1_MSG]
 
     return specs
 

@@ -142,6 +142,7 @@ MONONA_PLANTS = [
     ("2026-07-25 02:00", "dissolved_oxygen", 4.0, 0),  # calendar-only
     ("2026-07-25 03:00", "dissolved_oxygen", 4.0, 0),
     ("2026-07-25 04:00", "dissolved_oxygen", 4.0, 0),
+    ("2026-07-25 05:00", "dissolved_oxygen", 4.0, 0),  # (keeps calendar_day != kept_flagged)
     ("2026-07-26 02:00", "dissolved_oxygen", 4.0, 0),  # observation-only
     ("2026-07-25 14:00", "dissolved_oxygen", -9999.0, 3),  # offline (< 5) in-window -> C1
 ]
@@ -164,6 +165,28 @@ WINGRA_PLANTS = [
     ("2026-07-18 03:00", "wind_speed", 10.0, 0),  # true max, in correct midnight day
     ("2026-07-18 03:00", "water_temp_C", -9999.0, 3),  # same row: temp offline -> E2
     ("2026-07-19 02:00", "wind_speed", 9.0, 0),  # only a wrong 08:00-shift would include
+]
+
+# Suspect (flag-2) readings that *bias* a statistic. Without these, the suspect values
+# sit so close to the clean mean that "drop only -9999 but keep flags 1/2" stays within
+# tolerance and is graded correct -- so C1 would be testable only on T2/T3. A stuck-high
+# temperature sensor over a few afternoons (T1), and short low-DO excursions (T4, T10),
+# make the flag rule change the answer by more than the tolerance on the mean/count tasks.
+MENDOTA_PLANTS += [
+    (f"2026-07-{d:02d} {h:02d}:00", "water_temp_C", 28.0, 2)  # T1 whole-month mean
+    for d in (5, 6, 7, 8)
+    for h in (12, 13, 14, 15)
+]
+MENDOTA_PLANTS += [
+    ("2026-07-20 13:00", "water_temp_C", 28.0, 2),  # T7 (Mendota side of the July 20 diff)
+    ("2026-07-20 14:00", "water_temp_C", 28.0, 2),
+    ("2026-07-22 13:00", "water_temp_C", 28.0, 2),  # T8 (Mendota side of the July 22 diff)
+    ("2026-07-22 14:00", "water_temp_C", 28.0, 2),
+]
+MONONA_PLANTS += [
+    ("2026-07-15 13:00", "dissolved_oxygen", 2.0, 2),  # T4 mean DO
+    ("2026-07-15 14:00", "dissolved_oxygen", 2.0, 2),
+    ("2026-07-25 13:00", "dissolved_oxygen", 4.0, 2),  # T10 count DO < 5
 ]
 
 PLANTS = {"mendota": MENDOTA_PLANTS, "monona": MONONA_PLANTS, "wingra": WINGRA_PLANTS}
