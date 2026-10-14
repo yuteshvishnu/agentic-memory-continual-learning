@@ -1,0 +1,127 @@
+% Person 5's report section: "Structured memory: design, final memory, and a
+% trajectory where memory helped" (~1 page). Self-contained fragment; \input
+% this into the main report.
+%
+% PACKAGE NEEDED: listings (for \begin{lstlisting} with breaklines, used to
+% quote verbatim memory/snapshot text without it overflowing the page width).
+% Add \usepackage{listings} to the preamble. No other package is required.
+
+\section{Structured memory: design, final memory, and a trajectory where memory helped}
+
+\paragraph{Design.} \texttt{StructuredMemory} (\texttt{task5\_structured\_memory/structured.py})
+is deterministic and makes zero LLM calls, so it adds no API cost beyond the agent's own
+calls. It starts empty; nothing about C1/C2/E1/E2 is pre-written anywhere in the code.
+
+\emph{Write.} A rule is created only when the checker's reviewer feedback on a failed
+attempt is classified, by substring match, into one of the four conventions. Its
+\texttt{text} field is stored \emph{verbatim} as that reviewer message -- never paraphrased.
+
+\emph{Retrieve.} The day rule (C2) is withheld for whole-month tasks and shown only for
+single-day-scoped questions -- a retrieval heuristic, not a fact the agent was ever told.
+Station-based exceptions (Wingra) are tagged \emph{applies to this task} or \emph{does not
+apply to this task} against the current task's station; the per-variable exception (E2) is
+shown neutrally, since its reviewer wording never names a station or variable to check.
+
+\emph{Update.} When feedback names an exception, it edits the parent rule in place (attaching
+the exception and narrowing its scope) rather than appending a second, possibly-contradictory
+rule. A single reviewer message can name more than one convention at once (Person 1's
+``both\_rules'' message); \texttt{classify\_feedback} returns every kind such a message
+names, and \texttt{update} writes or edits every rule it names, storing the same verbatim text
+as each rule's \texttt{text}. Each rule's scope is assembled from evidence -- the
+station/variable/day-type of the task that first taught it, plus later tasks where it was
+active and the agent solved the task on the first attempt, labeled \emph{retrieved, solved
+first try}. That label is deliberately weak: a first-attempt success does not prove the agent
+used the memory, only that it didn't need correcting.
+
+\emph{Forget.} The first time an exception is attached to a rule, the pre-exception version
+of that rule is frozen into a separate, timestamped \emph{retired} entry -- visible in
+\texttt{snapshot()} but never returned by \texttt{retrieve()}. Separately, if a rule was handed
+to the agent and the task still failed on feedback naming that same rule, it is logged under
+\texttt{retrieved\_but\_not\_applied} on the rule (count and task IDs) -- direct evidence of
+memory being retrieved and not applied (see the discussion notes for a worked example).
+
+Storing scope \emph{with} each rule, rather than the rule alone, is what T5, T6, T8, and T9 are
+designed to test: a memory that only remembers ``shift the day to 08:00'' or ``drop flagged
+readings'' has no way to except Wingra or per-variable filtering without overwriting itself
+into a contradiction. Recording \emph{where} a rule was learned and where its exceptions were
+discovered lets the exception edit the rule precisely instead of replacing it.
+
+\paragraph{Final structured memory.} All claims and numbers below come from the full protocol
+run (three repeats, all three conditions) that landed in \texttt{outputs/} under run
+\texttt{20261013-200839}. Two earlier single-pass structured-only runs
+(\texttt{20261013-182822}, \texttt{20261013-193556}) also exist, but they ran against an
+earlier version of the task data (e.g. T7's ground-truth answer has since changed) and are not
+counted in any number in this section. Below is the structured-memory snapshot after T10 of
+\emph{repeat~1} of \texttt{20261013-200839}, chosen because in this repeat the Wingra exception
+(E1) was learned at T5, the task the sequence was designed to introduce it at (see below for
+why the other repeats differ). The \texttt{[C1]} and \texttt{[C2]} active rules are reproduced
+in full; the one retired entry is included as-is (it is short enough not to need summarizing).
+
+{\footnotesize
+\begin{lstlisting}[breaklines=true, columns=fullflexible]
+Structured memory snapshot
+===========================
+
+[C1] status=active
+  Rule (verbatim feedback): Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values.
+  Scope: learned at monona/water_temp/single_day (T2); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4); retrieved, solved first try at mendota/wind_speed/whole_month (T6); retrieved, solved first try at mendota+monona/water_temp/single_day (T7); retrieved, solved first try at mendota+wingra/water_temp/single_day (T8); retrieved, solved first try at wingra/wind_speed/single_day (T9); retrieved, solved first try at monona/dissolved_oxygen/single_day (T10)
+
+[C2] status=active
+  Rule (verbatim feedback): Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight.
+  Scope: learned at monona/water_temp/single_day (T2); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4); retrieved, solved first try at mendota+monona/water_temp/single_day (T7); retrieved, solved first try at monona/dissolved_oxygen/single_day (T10)
+  Exception (station=wingra): Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift. [seen at: T5]
+  Retrieved but not applied: 1 time(s) (T3)
+
+[C2@T5] status=retired superseded_by=C2 retired_at=T5
+  Reason: narrowed by exception learned at T5: Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift.
+  Rule (verbatim feedback): Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight.
+  Scope: learned at monona/water_temp/single_day (T2); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4)
+  Retrieved but not applied: 1 time(s) (T3)
+\end{lstlisting}
+}
+
+Two things are notably \emph{inconsistent} across repeats of this same run, and we report that
+plainly rather than smooth it over. First, \emph{when} E1 is learned varies: in repeat~1
+(shown above) it was learned at T5 as intended, but in repeats~0 and~2 the agent solved T5 on
+the first attempt and the Wingra exception was instead learned later, at T8 (both repeats'
+first T8 attempt got answer $-0.48$ and the identical ``Wingra's v2 logger...'' feedback before
+correcting to $0.08$). Across the three repeats of this run, E1 fired at T5 once (repeat~1) and
+at T8 twice (repeats~0 and~2) -- never consistently where the task sequence intends. Second,
+C1's per-variable exception (E2, planted for T6/T9) has \emph{never} fired in any of the three
+repeats -- T6 was solved on the first attempt every time, so the row-drop mistake it is meant
+to catch has simply never happened, and \texttt{structured.py}'s exception-editing logic for C1
+remains untested by real data.
+
+\paragraph{Trajectory where memory helped.} T7 (``Mendota minus Monona, July 20'', needing both
+C1 and C2) is the most robust example across run \texttt{20261013-200839}: structured solved it
+on the \emph{first} attempt in all three repeats (1 attempt, 4 model calls each), while the
+\texttt{none} baseline needed more than one attempt in all three repeats (3, 2, and 2 attempts).
+In repeat~0, structured received this memory text and solved it immediately:
+
+{\footnotesize
+\begin{lstlisting}[breaklines=true, columns=fullflexible]
+1. Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values.
+   Scope: learned at mendota/water_temp/whole_month (T1); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4); retrieved, solved first try at wingra/water_temp/single_day (T5); retrieved, solved first try at mendota/wind_speed/whole_month (T6)
+2. Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight.
+   Scope: learned at monona/water_temp/single_day (T2); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4); retrieved, solved first try at wingra/water_temp/single_day (T5)
+\end{lstlisting}
+}
+
+With that memory, the agent filtered both stations to \texttt{water\_temp\_qc==0} and windowed
+each day 08:00--08:00, answering $0.57$ on its single attempt. The \texttt{none} baseline, with
+no memory, took three attempts on repeat~0 of the same run: its first answer ($0.11$) was
+generic-wrong, its second ($-0.43$) drew the exact reviewer message ``Lab days run 08:00 to
+08:00 local for the v1 stations, not midnight to midnight,'' and only the third attempt matched.
+Repeats 1 and 2 of \texttt{none} each needed two attempts, always including that same C2
+reviewer message before correcting -- the cold agent had to rediscover the day rule on T7 itself
+every time. T10 shows the same pattern even more starkly: structured was first-try in all three
+repeats, while \texttt{none} never answered T10 correctly within three attempts in two of the
+three repeats (final \texttt{success=False} for both).
+
+T8 -- suggested as a candidate trajectory -- turned out \emph{not} to be a clean ``memory
+helped'' example once checked against the data, so it is not used as the main trajectory here.
+Across the three repeats of \texttt{20261013-200839}, T8 was the task where E1 was first
+learned (via a failed first attempt) in two of them (repeats~0 and~2); only in repeat~1, where
+E1 was already known from T5, did T8 succeed on the first attempt with the rule already in
+memory. T8 is therefore mostly a ``memory learned an exception'' example, not a ``memory
+helped'' one, in this data.
