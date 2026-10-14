@@ -1,0 +1,87 @@
+{
+  "condition": "episodic",
+  "total_episodes": 3,
+  "episodes": [
+    {
+      "task_id": "T1",
+      "prompt": "Using task1_data_and_tasks/data/mendota.csv, what was the mean water temperature (deg C) at Lake Mendota during July 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/mendota.csv"
+      ],
+      "success": true,
+      "num_attempts": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'; df=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\nx=df.loc[df.water_temp_C!=-9999,'water_temp_C']; print(len(x),x.mean(),f'{x.mean():.2f}')",
+          "answer": 22.23,
+          "feedback": "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values.",
+          "stdout": "735 22.225374149659867 22.23"
+        },
+        {
+          "attempt": 2,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'; df=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\nx=df[(df.timestamp.dt.month==7)&(df.timestamp.dt.year==2026)&(df.water_temp_qc==0)]['water_temp_C']\nprint(len(x),x.min(),x.mean(),f'{x.mean():.2f}',x.value_counts().head())",
+          "answer": 22.06,
+          "feedback": "",
+          "stdout": "703 20.0 22.056941678520626 22.06 water_temp_C\n20.62    9\n23.41    8\n20.66    7\n20.54    7\n26.00    7\nName: count, dtype: int64"
+        }
+      ],
+      "feedbacks": [
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'; df=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\nx=df[(df.timestamp.dt.month==7)&(df.timestamp.dt.year==2026)&(df.water_temp_qc==0)]['water_temp_C']\nprint(len(x),x.min(),x.mean(),f'{x.mean():.2f}',x.value_counts().head())",
+      "final_answer": 22.06
+    },
+    {
+      "task_id": "T2",
+      "prompt": "Using task1_data_and_tasks/data/monona.csv, what was the maximum water temperature (deg C) at Lake Monona on July 4, 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/monona.csv"
+      ],
+      "success": true,
+      "num_attempts": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/monona.csv'; df=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\nx=df[(df.timestamp.dt.date==pd.Timestamp('2026-07-04').date())&(df.water_temp_qc==0)]['water_temp_C']\nprint(len(x),x.max(),f'{x.max():.2f}')",
+          "answer": 23.64,
+          "feedback": "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight.",
+          "stdout": "23 23.64 23.64"
+        },
+        {
+          "attempt": 2,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/monona.csv'; df=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\n# Lab day July 4: Jul 4 08:00 through Jul 5 07:59, local timestamps\ns=pd.Timestamp('2026-07-04 08:00'); e=pd.Timestamp('2026-07-05 08:00')\nx=df[(df.timestamp>=s)&(df.timestamp<e)&(df.water_temp_qc==0)]['water_temp_C']\nprint(x.tolist()); print(f'{x.max():.2f}')",
+          "answer": 28.0,
+          "feedback": "",
+          "stdout": "[20.87, 20.47, 20.42, 20.54, 20.73, 21.29, 21.68, 21.92, 22.87, 22.89, 23.21, 23.08, 23.51, 23.64, 23.05, 23.13, 22.32, 22.48, 28.0, 21.57, 21.52, 20.9, 20.56]\n28.00"
+        }
+      ],
+      "feedbacks": [
+        "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
+      ],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/monona.csv'; df=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\n# Lab day July 4: Jul 4 08:00 through Jul 5 07:59, local timestamps\ns=pd.Timestamp('2026-07-04 08:00'); e=pd.Timestamp('2026-07-05 08:00')\nx=df[(df.timestamp>=s)&(df.timestamp<e)&(df.water_temp_qc==0)]['water_temp_C']\nprint(x.tolist()); print(f'{x.max():.2f}')",
+      "final_answer": 28.0
+    },
+    {
+      "task_id": "T3",
+      "prompt": "Using task1_data_and_tasks/data/mendota.csv, how many hourly readings exceeded 25 deg C at Lake Mendota on July 10, 2026? Reply with one integer.",
+      "files": [
+        "task1_data_and_tasks/data/mendota.csv"
+      ],
+      "success": true,
+      "num_attempts": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'\ndf=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\ns=pd.Timestamp('2026-07-10 08:00'); e=pd.Timestamp('2026-07-11 08:00')\nx=df[(df.timestamp>=s)&(df.timestamp<e)&(df.water_temp_qc==0)]\nprint(x[['timestamp','water_temp_C']].to_string(index=False))\nprint((x.water_temp_C>25).sum())",
+          "answer": 1.0,
+          "feedback": "",
+          "stdout": "timestamp  water_temp_C\n2026-07-10 08:00:00         20.60\n2026-07-10 09:00:00         20.62\n2026-07-10 10:00:00         20.61\n2026-07-10 11:00:00         20.84\n2026-07-10 12:00:00         21.02\n2026-07-10 13:00:00         21.11\n2026-07-10 14:00:00         21.53\n2026-07-10 16:00:00         22.62\n2026-07-10 17:00:00         22.95\n2026-07-10 18:00:00         23.21\n2026-07-10 19:00:00         23.73\n2026-07-10 20:00:00         23.54\n2026-07-10 21:00:00         23.66\n2026-07-10 22:00:00         23.28\n2026-07-10 23:00:00         22.99\n2026-07-11 00:00:00         22.91\n2026-07-11 01:00:00         22.74\n2026-07-11 02:00:00         26.00\n2026-07-11 03:00:00         21.94\n2026-07-11 04:00:00         21.50\n2026-07-11 05:00:00         21.33\n2026-07-11 06:00:00         21.32\n2026-07-11 07:00:00         20.42\n1"
+        }
+      ],
+      "feedbacks": [],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'\ndf=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\ns=pd.Timestamp('2026-07-10 08:00'); e=pd.Timestamp('2026-07-11 08:00')\nx=df[(df.timestamp>=s)&(df.timestamp<e)&(df.water_temp_qc==0)]\nprint(x[['timestamp','water_temp_C']].to_string(index=False))\nprint((x.water_temp_C>25).sum())",
+      "final_answer": 1.0
+    }
+  ]
+}

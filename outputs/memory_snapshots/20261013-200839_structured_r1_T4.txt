@@ -1,0 +1,11 @@
+Structured memory snapshot
+===========================
+
+[C1] status=active
+  Rule (verbatim feedback): Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values.
+  Scope: learned at monona/water_temp/single_day (T2); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4)
+
+[C2] status=active
+  Rule (verbatim feedback): Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight.
+  Scope: learned at monona/water_temp/single_day (T2); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4)
+  Retrieved but not applied: 1 time(s) (T3)

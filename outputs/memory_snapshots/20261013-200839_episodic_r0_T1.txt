@@ -1,0 +1,36 @@
+{
+  "condition": "episodic",
+  "total_episodes": 1,
+  "episodes": [
+    {
+      "task_id": "T1",
+      "prompt": "Using task1_data_and_tasks/data/mendota.csv, what was the mean water temperature (deg C) at Lake Mendota during July 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/mendota.csv"
+      ],
+      "success": true,
+      "num_attempts": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'\ndf=pd.read_csv(p,skiprows=1,parse_dates=['timestamp'])\nx=df.loc[df.timestamp.dt.to_period('M')=='2026-07','water_temp_C']\nfor cond in [x!=-9999, x>-1000]: print(cond.sum(), x[cond].mean(), f'{x[cond].mean():.2f}')\nprint(df.loc[x==-9999,['timestamp','water_temp_C','water_temp_qc']].to_string(index=False))",
+          "answer": 22.23,
+          "feedback": "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values.",
+          "stdout": "735 22.225374149659867 22.23\n735 22.225374149659867 22.23\n          timestamp  water_temp_C  water_temp_qc\n2026-07-02 02:00:00       -9999.0              3\n2026-07-04 09:00:00       -9999.0              3\n2026-07-05 08:00:00       -9999.0              3\n2026-07-07 07:00:00       -9999.0              3\n2026-07-12 14:00:00       -9999.0              3\n2026-07-12 19:00:00       -9999.0              3\n2026-07-20 12:00:00       -9999.0              3\n2026-07-22 16:00:00       -9999.0              3\n2026-07-24 22:00:00       -9999.0              3"
+        },
+        {
+          "attempt": 2,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'\ndf=pd.read_csv(p,skiprows=1,parse_dates=['timestamp'])\nx=df[(df.timestamp.dt.to_period('M')=='2026-07') & (df.water_temp_qc==0)].water_temp_C\nprint(len(x), x.mean(), f'{x.mean():.2f}')",
+          "answer": 22.06,
+          "feedback": "",
+          "stdout": "703 22.056941678520626 22.06"
+        }
+      ],
+      "feedbacks": [
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'\ndf=pd.read_csv(p,skiprows=1,parse_dates=['timestamp'])\nx=df[(df.timestamp.dt.to_period('M')=='2026-07') & (df.water_temp_qc==0)].water_temp_C\nprint(len(x), x.mean(), f'{x.mean():.2f}')",
+      "final_answer": 22.06
+    }
+  ]
+}
