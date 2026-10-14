@@ -7,13 +7,15 @@ Run from the repo root:
 """
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
 
-from task5_structured_memory.structured import StructuredMemory
+from task5_structured_memory.structured import StructuredMemory, classify_feedback
 
-TASKS_JSON = Path(__file__).resolve().parent.parent / "task1_data_and_tasks" / "tasks.json"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+TASKS_JSON = REPO_ROOT / "task1_data_and_tasks" / "tasks.json"
 TASKS = {t["id"]: t for t in json.loads(TASKS_JSON.read_text())}
 
 KNOWN_FEEDBACK = {
@@ -21,6 +23,18 @@ KNOWN_FEEDBACK = {
     for task in TASKS.values()
     for _, feedback in task.get("wrong_variants", {}).values()
 }
+
+
+def _tasks_from_git_ref(ref: str) -> dict:
+    """Person 1's tasks.json as it stands on `ref`, independent of whether this
+    branch has rebased onto it yet -- used to test against the new "both_rules"
+    combined-mistake message without depending on local rebase timing."""
+    output = subprocess.run(["git", "show", f"{ref}:task1_data_and_tasks/tasks.json"],
+                            cwd=REPO_ROOT, capture_output=True, text=True, check=True).stdout
+    return {t["id"]: t for t in json.loads(output)}
+
+
+NEW_TASKS = _tasks_from_git_ref("origin/main")
 
 
 def feedback_for(task_id: str, mistake_key: str) -> str:
@@ -296,6 +310,44 @@ def test_variable_keyword_mapping():
     assert memory._task_context({"files": [], "prompt": "logged 18°C at dawn"})["variables"] == ["water_temp"]
     assert memory._task_context({"files": [], "prompt": "dissolved oxygen crashed"})["variables"] == ["dissolved_oxygen"]
     assert memory._task_context({"files": [], "prompt": "wind gusts were high"})["variables"] == ["wind_speed"]
+
+
+def test_combined_message_creates_both_c1_and_c2(memory):
+    # Person 1's new "both_rules" wrong_variant on T3 (origin/main), wording
+    # "...use only readings whose own flag is 0..." (not "quality flag is 0").
+    combined = NEW_TASKS["T3"]["wrong_variants"]["both_rules"][1]
+    assert set(classify_feedback(combined)) == {"C1", "C2"}
+
+    trace = {
+        "task_id": "T3", "answer": 1.0, "success": True, "memory_text": "",
+        "attempts": [
+            {"attempt": 1, "code": "", "stdout": "", "answer": 5, "feedback": combined, "runs": []},
+            {"attempt": 2, "code": "", "stdout": "", "answer": 1.0, "feedback": "", "runs": []},
+        ],
+        "messages": [],
+    }
+    memory.update(NEW_TASKS["T3"], trace, True)
+
+    assert "C1" in memory.rules and "C2" in memory.rules
+    assert memory.rules["C1"]["text"] == combined   # stored verbatim for each rule it creates
+    assert memory.rules["C2"]["text"] == combined
+    assert memory.rules["C1"]["evidence"][0]["task_id"] == "T3"
+    assert memory.rules["C2"]["evidence"][0]["task_id"] == "T3"
+
+
+def test_every_message_in_new_tasks_json_classifies_to_at_least_one_kind():
+    for task in NEW_TASKS.values():
+        for mistake_key, (_, message) in task.get("wrong_variants", {}).items():
+            kinds = classify_feedback(message)
+            assert kinds, f"{task['id']}/{mistake_key} classified to nothing: {message!r}"
+
+
+def test_classify_feedback_flag_wording_fix():
+    old_wording = "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+    new_wording = "More than one convention is off here. Start with data quality: use only readings whose own flag is 0, then reconsider how the day is defined."
+    assert "C1" in classify_feedback(old_wording)
+    assert "C1" in classify_feedback(new_wording)
+    assert "C2" in classify_feedback(new_wording)
 
 
 def test_full_sequence_t1_through_t10_and_print_final_snapshot(memory):

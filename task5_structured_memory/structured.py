@@ -70,20 +70,27 @@ def _scope_from_prompt(prompt: str) -> str:
     return "unknown"
 
 
-def classify_feedback(message: str) -> str | None:
-    """Map a checker reviewer message to the convention it names, or None."""
+def classify_feedback(message: str) -> list[str]:
+    """Map a checker reviewer message to every convention it names.
+
+    A single message can name more than one rule (e.g. a combined "you broke
+    both C1 and C2" reviewer message), so this checks all four patterns --
+    no early return -- and returns every kind that matched, in the order
+    checked: E1, E2, C2, C1.
+    """
     if not message:
-        return None
+        return []
     lower = message.lower()
+    kinds = []
     if "wingra" in lower or "standard calendar day" in lower:
-        return "E1"
+        kinds.append("E1")
     if "per sensor" in lower or "other readings in that row" in lower:
-        return "E2"
-    if "08:00 to 08:00" in lower or "midnight" in lower:
-        return "C2"
-    if "quality flag is 0" in lower:
-        return "C1"
-    return None
+        kinds.append("E2")
+    if "08:00 to 08:00" in lower or "midnight" in lower or "how the day is defined" in lower:
+        kinds.append("C2")
+    if "flag is 0" in lower:   # matches both "quality flag is 0" and "own flag is 0"
+        kinds.append("C1")
+    return kinds
 
 
 class StructuredMemory(Memory):
@@ -178,14 +185,14 @@ class StructuredMemory(Memory):
         feedback_by_kind: dict[str, str] = {}
         for attempt in attempts:
             feedback = attempt.get("feedback", "")
-            kind = classify_feedback(feedback)
-            if kind is None:
-                continue
-            feedback_by_kind[kind] = feedback
-            if kind in ("C1", "C2"):
-                self._write_or_reinforce(kind, feedback, task_id, ctx)
-            else:
-                self._apply_exception(kind, feedback, task_id, ctx)
+            for kind in classify_feedback(feedback):
+                # A combined message (e.g. "you broke both rules") names more than one
+                # kind for the same attempt -- handle every one of them, not just the first.
+                feedback_by_kind[kind] = feedback
+                if kind in ("C1", "C2"):
+                    self._write_or_reinforce(kind, feedback, task_id, ctx)
+                else:
+                    self._apply_exception(kind, feedback, task_id, ctx)
 
         for rule_id in retrieved_ids:
             hit = rule_id in feedback_by_kind
