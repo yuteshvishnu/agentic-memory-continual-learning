@@ -1,0 +1,224 @@
+{
+  "condition": "episodic",
+  "total_episodes": 9,
+  "episodes": [
+    {
+      "task_id": "T1",
+      "prompt": "Using task1_data_and_tasks/data/mendota.csv, what was the mean water temperature (deg C) at Lake Mendota during July 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/mendota.csv"
+      ],
+      "success": true,
+      "num_attempts": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'; d=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp); x=d.loc[d.timestamp.dt.month.eq(7),'water_temp_C']; print((x[x>-100].mean()), f'{x[x>-100].mean():.2f}', (x==-9999).sum())",
+          "answer": 22.23,
+          "feedback": "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values.",
+          "stdout": "22.225374149659867 22.23 9"
+        },
+        {
+          "attempt": 2,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'; d=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp); x=d.loc[d.timestamp.dt.month.eq(7)&d.water_temp_qc.eq(0),'water_temp_C']; x=x[x>-100]; print(len(x),x.mean(),f'{x.mean():.2f}')",
+          "answer": 22.06,
+          "feedback": "",
+          "stdout": "703 22.056941678520626 22.06"
+        }
+      ],
+      "feedbacks": [
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'; d=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp); x=d.loc[d.timestamp.dt.month.eq(7)&d.water_temp_qc.eq(0),'water_temp_C']; x=x[x>-100]; print(len(x),x.mean(),f'{x.mean():.2f}')",
+      "final_answer": 22.06
+    },
+    {
+      "task_id": "T2",
+      "prompt": "Using task1_data_and_tasks/data/monona.csv, what was the maximum water temperature (deg C) at Lake Monona on July 4, 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/monona.csv"
+      ],
+      "success": true,
+      "num_attempts": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/monona.csv'; d=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp); x=d.loc[(d.timestamp.dt.date==pd.Timestamp('2026-07-04').date()) & d.water_temp_qc.eq(0),'water_temp_C']; x=x[x>-100]; print(x.max()); print(x.tolist())",
+          "answer": 23.64,
+          "feedback": "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight.",
+          "stdout": "23.64\n[23.1, 22.69, 22.51, 22.1, 21.92, 21.04, 21.05, 20.7, 20.87, 20.47, 20.42, 20.54, 20.73, 21.29, 21.68, 21.92, 22.87, 22.89, 23.21, 23.08, 23.51, 23.64, 23.05]"
+        },
+        {
+          "attempt": 2,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/monona.csv'; d=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp); # lab day July 4 = Jul 4 08:00 through Jul 5 07:59\nx=d.loc[(d.timestamp>=pd.Timestamp('2026-07-04 08:00'))&(d.timestamp<pd.Timestamp('2026-07-05 08:00'))&d.water_temp_qc.eq(0),'water_temp_C']; x=x[x>-100]; print(x.max()); print(d.loc[x.index,['timestamp','water_temp_C']].to_string(index=False))",
+          "answer": 28.0,
+          "feedback": "",
+          "stdout": "28.0\n          timestamp  water_temp_C\n2026-07-04 08:00:00         20.87\n2026-07-04 09:00:00         20.47\n2026-07-04 10:00:00         20.42\n2026-07-04 11:00:00         20.54\n2026-07-04 12:00:00         20.73\n2026-07-04 13:00:00         21.29\n2026-07-04 14:00:00         21.68\n2026-07-04 15:00:00         21.92\n2026-07-04 17:00:00         22.87\n2026-07-04 18:00:00         22.89\n2026-07-04 19:00:00         23.21\n2026-07-04 20:00:00         23.08\n2026-07-04 21:00:00         23.51\n2026-07-04 22:00:00         23.64\n2026-07-04 23:00:00         23.05\n2026-07-05 00:00:00         23.13\n2026-07-05 01:00:00         22.32\n2026-07-05 02:00:00         22.48\n2026-07-05 03:00:00         28.00\n2026-07-05 04:00:00         21.57\n2026-07-05 05:00:00         21.52\n2026-07-05 06:00:00         20.90\n2026-07-05 07:00:00         20.56"
+        }
+      ],
+      "feedbacks": [
+        "Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight."
+      ],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/monona.csv'; d=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp); # lab day July 4 = Jul 4 08:00 through Jul 5 07:59\nx=d.loc[(d.timestamp>=pd.Timestamp('2026-07-04 08:00'))&(d.timestamp<pd.Timestamp('2026-07-05 08:00'))&d.water_temp_qc.eq(0),'water_temp_C']; x=x[x>-100]; print(x.max()); print(d.loc[x.index,['timestamp','water_temp_C']].to_string(index=False))",
+      "final_answer": 28.0
+    },
+    {
+      "task_id": "T3",
+      "prompt": "Using task1_data_and_tasks/data/mendota.csv, how many hourly readings exceeded 25 deg C at Lake Mendota on July 10, 2026? Reply with one integer.",
+      "files": [
+        "task1_data_and_tasks/data/mendota.csv"
+      ],
+      "success": true,
+      "num_attempts": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'\nd=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp)\nx=d.loc[(d.timestamp>=pd.Timestamp('2026-07-10 08:00'))&(d.timestamp<pd.Timestamp('2026-07-11 08:00'))&d.water_temp_qc.eq(0),'water_temp_C']\nprint(int((x[x>-100]>25).sum()))",
+          "answer": 1.0,
+          "feedback": "",
+          "stdout": "1"
+        }
+      ],
+      "feedbacks": [],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'\nd=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp)\nx=d.loc[(d.timestamp>=pd.Timestamp('2026-07-10 08:00'))&(d.timestamp<pd.Timestamp('2026-07-11 08:00'))&d.water_temp_qc.eq(0),'water_temp_C']\nprint(int((x[x>-100]>25).sum()))",
+      "final_answer": 1.0
+    },
+    {
+      "task_id": "T4",
+      "prompt": "Using task1_data_and_tasks/data/monona.csv, what was the mean dissolved oxygen (mg/L) at Lake Monona on July 15, 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/monona.csv"
+      ],
+      "success": true,
+      "num_attempts": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/monona.csv'; d=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp)\nx=d.loc[(d.timestamp>=pd.Timestamp('2026-07-15 08:00'))&(d.timestamp<pd.Timestamp('2026-07-16 08:00'))&d.do_qc.eq(0),'dissolved_oxygen']; x=x[x>-100]; print(len(x),f'{x.mean():.2f}')",
+          "answer": 7.32,
+          "feedback": "",
+          "stdout": "20 7.32"
+        }
+      ],
+      "feedbacks": [],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/monona.csv'; d=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp)\nx=d.loc[(d.timestamp>=pd.Timestamp('2026-07-15 08:00'))&(d.timestamp<pd.Timestamp('2026-07-16 08:00'))&d.do_qc.eq(0),'dissolved_oxygen']; x=x[x>-100]; print(len(x),f'{x.mean():.2f}')",
+      "final_answer": 7.32
+    },
+    {
+      "task_id": "T5",
+      "prompt": "Using task1_data_and_tasks/data/wingra.csv, what was the mean water temperature (deg C) at Lake Wingra on July 4, 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/wingra.csv"
+      ],
+      "success": true,
+      "num_attempts": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/wingra.csv'\nd=pd.read_csv(p,comment='#')\nd['timestamp']=pd.to_datetime(d['timestamp'])\nx=d.loc[(d.timestamp>=pd.Timestamp('2026-07-04 08:00'))&(d.timestamp<pd.Timestamp('2026-07-05 08:00'))&d.water_temp_qc.eq(0),'water_temp_C']\nx=x[x>-100]\nprint(len(x), x.mean(), f'{x.mean():.2f}')",
+          "answer": 21.88,
+          "feedback": "Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift.",
+          "stdout": "23 21.875652173913043 21.88"
+        },
+        {
+          "attempt": 2,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/wingra.csv'\nd=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d['timestamp'])\nx=d.loc[(d.timestamp>=pd.Timestamp('2026-07-04'))&(d.timestamp<pd.Timestamp('2026-07-05'))&d.water_temp_qc.eq(0),'water_temp_C']\nx=x[x>-100]\nprint(len(x),x.mean(),f'{x.mean():.2f}')",
+          "answer": 22.46,
+          "feedback": "",
+          "stdout": "22 22.45590909090909 22.46"
+        }
+      ],
+      "feedbacks": [
+        "Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift."
+      ],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/wingra.csv'\nd=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d['timestamp'])\nx=d.loc[(d.timestamp>=pd.Timestamp('2026-07-04'))&(d.timestamp<pd.Timestamp('2026-07-05'))&d.water_temp_qc.eq(0),'water_temp_C']\nx=x[x>-100]\nprint(len(x),x.mean(),f'{x.mean():.2f}')",
+      "final_answer": 22.46
+    },
+    {
+      "task_id": "T6",
+      "prompt": "Using task1_data_and_tasks/data/mendota.csv, what was the maximum wind speed (m/s) at Lake Mendota during July 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/mendota.csv"
+      ],
+      "success": true,
+      "num_attempts": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'\nd=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp)\nx=d.loc[d.timestamp.dt.month.eq(7)&d.timestamp.dt.year.eq(2026)&d.wind_qc.eq(0),'wind_speed']; x=x[x>-100]\nprint(f'{x.max():.2f}')",
+          "answer": 11.0,
+          "feedback": "",
+          "stdout": "11.00"
+        }
+      ],
+      "feedbacks": [],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'\nd=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp)\nx=d.loc[d.timestamp.dt.month.eq(7)&d.timestamp.dt.year.eq(2026)&d.wind_qc.eq(0),'wind_speed']; x=x[x>-100]\nprint(f'{x.max():.2f}')",
+      "final_answer": 11.0
+    },
+    {
+      "task_id": "T7",
+      "prompt": "Using task1_data_and_tasks/data/mendota.csv and task1_data_and_tasks/data/monona.csv, what was Lake Mendota's mean water temperature (deg C) minus Lake Monona's mean water temperature on July 20, 2026 (Mendota minus Monona)? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/mendota.csv",
+        "task1_data_and_tasks/data/monona.csv"
+      ],
+      "success": true,
+      "num_attempts": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\n\ndef mean(path):\n d=pd.read_csv(path,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp)\n # lab day July 20: 08:00 through July 21 07:59, trustworthy own QC=0\n x=d.loc[(d.timestamp>=pd.Timestamp('2026-07-20 08:00'))&(d.timestamp<pd.Timestamp('2026-07-21 08:00'))&d.water_temp_qc.eq(0),'water_temp_C']\n x=x[x>-100]\n return x.mean(),len(x),x.tolist()\na=mean('task1_data_and_tasks/data/mendota.csv'); b=mean('task1_data_and_tasks/data/monona.csv')\nprint(a,b,a[0]-b[0],f'{a[0]-b[0]:.2f}')",
+          "answer": 0.57,
+          "feedback": "",
+          "stdout": "(np.float64(22.40714285714286), 21, [20.57, 20.57, 20.7, 20.77, 21.8, 22.28, 22.78, 22.92, 23.37, 23.31, 23.51, 23.32, 23.43, 23.06, 22.29, 26.0, 26.0, 21.5, 20.92, 20.74, 20.71]) (np.float64(21.832916666666666), 24, [20.6, 20.82, 20.81, 20.47, 21.01, 21.41, 21.47, 21.92, 22.06, 22.84, 23.03, 22.76, 23.39, 23.52, 23.5, 22.9, 23.32, 22.9, 20.0, 20.0, 21.78, 21.75, 20.95, 20.78]) 0.5742261904761925 0.57"
+        }
+      ],
+      "feedbacks": [],
+      "final_code": "import pandas as pd\n\ndef mean(path):\n d=pd.read_csv(path,comment='#'); d['timestamp']=pd.to_datetime(d.timestamp)\n # lab day July 20: 08:00 through July 21 07:59, trustworthy own QC=0\n x=d.loc[(d.timestamp>=pd.Timestamp('2026-07-20 08:00'))&(d.timestamp<pd.Timestamp('2026-07-21 08:00'))&d.water_temp_qc.eq(0),'water_temp_C']\n x=x[x>-100]\n return x.mean(),len(x),x.tolist()\na=mean('task1_data_and_tasks/data/mendota.csv'); b=mean('task1_data_and_tasks/data/monona.csv')\nprint(a,b,a[0]-b[0],f'{a[0]-b[0]:.2f}')",
+      "final_answer": 0.57
+    },
+    {
+      "task_id": "T8",
+      "prompt": "Using task1_data_and_tasks/data/wingra.csv and task1_data_and_tasks/data/mendota.csv, what was Lake Wingra's mean water temperature (deg C) minus Lake Mendota's mean water temperature on July 22, 2026 (Wingra minus Mendota)? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/wingra.csv",
+        "task1_data_and_tasks/data/mendota.csv"
+      ],
+      "success": true,
+      "num_attempts": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\n\ndef m(path, start, end):\n d=pd.read_csv(path,comment='#'); d['timestamp']=pd.to_datetime(d['timestamp'])\n x=d[(d.timestamp>=pd.Timestamp(start))&(d.timestamp<pd.Timestamp(end))&d.water_temp_qc.eq(0)].water_temp_C\n x=x[x>-100]\n return x.mean(),len(x),x.tolist()\n# Wingra standard calendar day; Mendota observation day 08:00-08:00\nw=m('task1_data_and_tasks/data/wingra.csv','2026-07-22','2026-07-23')\nmd=m('task1_data_and_tasks/data/mendota.csv','2026-07-22 08:00','2026-07-23 08:00')\nprint(w,md,w[0]-md[0],f'{w[0]-md[0]:.2f}')",
+          "answer": 0.08,
+          "feedback": "",
+          "stdout": "(np.float64(22.324090909090906), 22, [23.08, 22.92, 26.0, 26.0, 21.61, 21.43, 20.94, 20.65, 20.68, 20.46, 20.3, 20.64, 21.07, 21.46, 21.88, 22.45, 22.55, 22.87, 23.26, 23.58, 23.69, 23.61]) (np.float64(22.24428571428572), 21, [20.3, 20.2, 20.2, 20.51, 20.93, 22.14, 22.55, 22.98, 23.29, 23.51, 23.3, 23.6, 23.27, 23.1, 23.03, 25.0, 25.0, 21.35, 21.03, 20.87, 20.97]) 0.07980519480518566 0.08"
+        }
+      ],
+      "feedbacks": [],
+      "final_code": "import pandas as pd\n\ndef m(path, start, end):\n d=pd.read_csv(path,comment='#'); d['timestamp']=pd.to_datetime(d['timestamp'])\n x=d[(d.timestamp>=pd.Timestamp(start))&(d.timestamp<pd.Timestamp(end))&d.water_temp_qc.eq(0)].water_temp_C\n x=x[x>-100]\n return x.mean(),len(x),x.tolist()\n# Wingra standard calendar day; Mendota observation day 08:00-08:00\nw=m('task1_data_and_tasks/data/wingra.csv','2026-07-22','2026-07-23')\nmd=m('task1_data_and_tasks/data/mendota.csv','2026-07-22 08:00','2026-07-23 08:00')\nprint(w,md,w[0]-md[0],f'{w[0]-md[0]:.2f}')",
+      "final_answer": 0.08
+    },
+    {
+      "task_id": "T9",
+      "prompt": "Using task1_data_and_tasks/data/wingra.csv, what was the maximum wind speed (m/s) at Lake Wingra on July 18, 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/wingra.csv"
+      ],
+      "success": true,
+      "num_attempts": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/wingra.csv'\nd=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d['timestamp'])\nx=d[(d.timestamp>=pd.Timestamp('2026-07-18'))&(d.timestamp<pd.Timestamp('2026-07-19'))]\nprint(d.columns.tolist())\nprint(x[['wind_speed_ms']].head() if 'wind_speed_ms' in x else x.filter(like='wind').head())\nprint(x.filter(like='wind').max(numeric_only=True))",
+          "answer": 10.0,
+          "feedback": "",
+          "stdout": "['timestamp', 'water_temp_C', 'water_temp_qc', 'dissolved_oxygen', 'do_qc', 'wind_speed', 'wind_qc']\n     wind_speed  wind_qc\n408        1.89        0\n409        0.04        0\n410        1.29        0\n411       10.00        0\n412        4.92        0\nwind_speed    10.0\nwind_qc        0.0\ndtype: float64"
+        }
+      ],
+      "feedbacks": [],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/wingra.csv'\nd=pd.read_csv(p,comment='#'); d['timestamp']=pd.to_datetime(d['timestamp'])\nx=d[(d.timestamp>=pd.Timestamp('2026-07-18'))&(d.timestamp<pd.Timestamp('2026-07-19'))]\nprint(d.columns.tolist())\nprint(x[['wind_speed_ms']].head() if 'wind_speed_ms' in x else x.filter(like='wind').head())\nprint(x.filter(like='wind').max(numeric_only=True))",
+      "final_answer": 10.0
+    }
+  ]
+}

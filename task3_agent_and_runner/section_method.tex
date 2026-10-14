@@ -1,0 +1,48 @@
+% Report section: "Method: agent and metrics" (~half page).
+% Self-contained fragment; \input this into the main report. Uses only plain text and math.
+
+\section{Method: agent and metrics}
+
+\paragraph{Agent.}
+A single fixed model answers every task by writing Python. It has one tool,
+\texttt{run\_python}, which runs a script in a separate process from the repository root
+with a 60-second timeout and returns what it prints (truncated to 4{,}000 characters).
+Within an attempt the agent may run code as often as it needs, up to 8 model calls; on
+the last call tools are disabled so it must answer. An \emph{attempt} ends when the agent
+replies \texttt{FINAL ANSWER: <number>}, and that answer is graded. If it is wrong, the
+checker's reviewer message is added to the conversation and the agent tries again, for at
+most 3 attempts per task.
+
+\paragraph{Where memory enters.}
+The model, system prompt, prompt template and tool are identical in all three conditions,
+and none of them hints at a lab convention. The only difference is the text returned by
+\texttt{Memory.retrieve}, which we place in the first user message under ``Your notes
+from earlier tasks'' (``(none)'' when memory is empty), not in the system prompt. After
+each task the runner passes the full trace (every attempt's code, output, answer and
+reviewer feedback) to \texttt{Memory.update} and saves \texttt{Memory.snapshot}.
+
+\paragraph{Model and settings.}
+We used \texttt{gpt-5.6-luna} through the OpenAI Chat Completions API, priced at \$0.20 per
+million input tokens and \$1.20 per million output tokens. Reasoning is switched off
+(\texttt{reasoning\_effort="none"}) because this model does not accept function tools
+together with reasoning on that API; the setting is the same in every condition. We left
+temperature at the API default. The agent, runner and analysis code were written with the
+help of Claude Code (Claude Opus 5.5).
+
+\paragraph{Checker.}
+Grading is deterministic, not an LLM judge. An answer is correct if it is within the
+task's tolerance ($\pm 0.05$). Otherwise, if it matches a planted mistake (one rule
+broken, two rules broken together, or suspect readings kept), the checker returns that
+mistake's reviewer message, which names the broken rule; any other wrong answer gets a
+generic message with no hint.
+
+\paragraph{Protocol and metrics.}
+We run the full sequence T1--T10 three times per condition (90 task-runs). Memory starts
+empty at the beginning of every repeat, and repeats form the outer loop so that all
+conditions keep the same number of repeats if the budget runs out. For each task and
+condition we record first-attempt success (our primary metric), final success within three
+attempts, attempts used, model calls, input and output tokens, and cost. Every model call
+is logged to \texttt{outputs/results/calls.csv}, and the logger refuses new calls once the
+logged total reaches the \$5 team limit. A model call made while writing memory would go
+through the same logged function and count toward cost, but neither of our memory systems
+calls the model, so all cost comes from the agent.

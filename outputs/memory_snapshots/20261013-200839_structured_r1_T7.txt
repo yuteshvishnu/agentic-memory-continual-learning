@@ -1,0 +1,18 @@
+Structured memory snapshot
+===========================
+
+[C1] status=active
+  Rule (verbatim feedback): Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values.
+  Scope: learned at monona/water_temp/single_day (T2); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4); retrieved, solved first try at mendota/wind_speed/whole_month (T6); retrieved, solved first try at mendota+monona/water_temp/single_day (T7)
+
+[C2] status=active
+  Rule (verbatim feedback): Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight.
+  Scope: learned at monona/water_temp/single_day (T2); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4); retrieved, solved first try at mendota+monona/water_temp/single_day (T7)
+  Exception (station=wingra): Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift. [seen at: T5]
+  Retrieved but not applied: 1 time(s) (T3)
+
+[C2@T5] status=retired superseded_by=C2 retired_at=T5
+  Reason: narrowed by exception learned at T5: Wingra's v2 logger already records on the standard calendar day; don't apply the 08:00 observation-day shift.
+  Rule (verbatim feedback): Lab days run 08:00 to 08:00 local for the v1 stations, not midnight to midnight.
+  Scope: learned at monona/water_temp/single_day (T2); retrieved, solved first try at monona/dissolved_oxygen/single_day (T4)
+  Retrieved but not applied: 1 time(s) (T3)

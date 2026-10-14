@@ -1,0 +1,36 @@
+{
+  "condition": "episodic",
+  "total_episodes": 1,
+  "episodes": [
+    {
+      "task_id": "T1",
+      "prompt": "Using task1_data_and_tasks/data/mendota.csv, what was the mean water temperature (deg C) at Lake Mendota during July 2026? Reply with one number to 2 decimals.",
+      "files": [
+        "task1_data_and_tasks/data/mendota.csv"
+      ],
+      "success": true,
+      "num_attempts": 2,
+      "attempts": [
+        {
+          "attempt": 1,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'; df=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\nx=df.loc[df.water_temp_C!=-9999,'water_temp_C']; print(len(x),x.mean(),f'{x.mean():.2f}')",
+          "answer": 22.23,
+          "feedback": "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values.",
+          "stdout": "735 22.225374149659867 22.23"
+        },
+        {
+          "attempt": 2,
+          "code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'; df=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\nx=df[(df.timestamp.dt.month==7)&(df.timestamp.dt.year==2026)&(df.water_temp_qc==0)]['water_temp_C']\nprint(len(x),x.min(),x.mean(),f'{x.mean():.2f}',x.value_counts().head())",
+          "answer": 22.06,
+          "feedback": "",
+          "stdout": "703 20.0 22.056941678520626 22.06 water_temp_C\n20.62    9\n23.41    8\n20.66    7\n20.54    7\n26.00    7\nName: count, dtype: int64"
+        }
+      ],
+      "feedbacks": [
+        "Readings aren't trustworthy unless their own quality flag is 0; drop estimated, suspect, and offline values."
+      ],
+      "final_code": "import pandas as pd\np='task1_data_and_tasks/data/mendota.csv'; df=pd.read_csv(p,comment='#',parse_dates=['timestamp'])\nx=df[(df.timestamp.dt.month==7)&(df.timestamp.dt.year==2026)&(df.water_temp_qc==0)]['water_temp_C']\nprint(len(x),x.min(),x.mean(),f'{x.mean():.2f}',x.value_counts().head())",
+      "final_answer": 22.06
+    }
+  ]
+}
