@@ -26,7 +26,8 @@ We used \texttt{gpt-5.6-luna} through the OpenAI Chat Completions API, priced at
 million input tokens and \$1.20 per million output tokens. Reasoning is switched off
 (\texttt{reasoning\_effort="none"}) because this model does not accept function tools
 together with reasoning on that API; the setting is the same in every condition. We left
-temperature at the API default.
+temperature at the API default. The agent, runner and analysis code were written with the
+help of Claude Code (Claude Opus 5.5).
 
 \paragraph{Checker.}
 Grading is deterministic, not an LLM judge. An answer is correct if it is within the
